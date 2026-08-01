@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rekap Absensi Kehadiran Siswa - MTs NEGERI 2 KOTA TANGERANG</title>
+  <link rel="icon" type="image/png" href="logo_mts.png">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    table{
+      border-collapse: collapse;
+    }
+    tbody tr{
+    border-bottom:1px solid #e2e8f0;
+    }
+    tbody tr:hover{
+    background:#f8fafc;
+    }
+    thead th{
+    position:sticky; top:0; background:white; z-index:10;
+    }
+    ::-webkit-scrollbar { height: 8px; width: 8px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen w-full bg-slate-50">
+<header class="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 border-b-4 border-amber-400 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <!-- Desktop & Tablet -->
+        <div class="hidden md:flex items-center justify-between">
+
+          <!-- Logo + Nama Sekolah -->
+            <div class="flex items-center gap-4">
+                <img src="logo3.png"
+                    class="w-14 h-14 lg:w-16 lg:h-16 object-contain"
+                    alt="Logo Kemenag">
+                <img src="logo_mts.png"
+                    class="w-14 h-14 lg:w-16 lg:h-16 object-contain"
+                    alt="Logo MTs">
+                <div>
+                    <h2 class="text-white font-bold text-xl lg:text-2xl">
+                        MTs NEGERI 2 KOTA TANGERANG
+                    </h2>
+                    <p class="text-blue-200 text-sm">
+                        Madrasah Tsanawiyah Negeri 2 Kota Tangerang
+                    </p>
+                </div>
+            </div>
+
+            <!-- Judul Sistem -->
+            <div class="text-right">
+                <div class="flex items-center justify-end gap-2">
+                    <i data-lucide="clipboard-check"
+                        class="w-8 h-8 text-amber-400"></i>
+                    <h1 class="text-white text-2xl lg:text-3xl font-bold">
+                        Sistem Absensi Kehadiran
+                    </h1>
+                </div>
+                <p class="text-blue-200 text-sm mt-1">
+                    Kelola kehadiran siswa secara cepat, tepat, dan akurat
+                </p>
+            </div>
+        </div>
+
+        <!-- Mobile -->
+        <div class="flex flex-col items-center text-center md:hidden">
+            <div class="flex gap-3 mb-3">
+                <img src="logo3.png"
+                    class="w-12 h-12 object-contain"
+                    alt="Logo">
+                <img src="logo_mts.png"
+                    class="w-12 h-12 object-contain"
+                    alt="Logo">
+            </div>
+            <h2 class="text-white font-bold text-lg leading-tight">
+                MTs NEGERI 2 KOTA TANGERANG
+            </h2>
+            <p class="text-blue-200 text-xs">
+                Madrasah Tsanawiyah Negeri 2 Kota Tangerang
+            </p>
+            <div class="flex items-center gap-2 mt-4">
+                <i data-lucide="clipboard-check"
+                    class="w-6 h-6 text-amber-400"></i>
+                <h1 class="text-white font-bold text-xl">
+                    Sistem Absensi
+                </h1>
+            </div>
+            <p class="text-blue-200 text-xs mt-1">
+                Kelola kehadiran siswa dengan mudah
+            </p>
+        </div>
+
+        <!-- Navigasi -->
+        <div class="mt-5 flex flex-col sm:flex-row gap-3 justify-center md:justify-end">
+            <a href="index.html"
+                class="flex items-center justify-center gap-2 h-12 px-5 rounded-lg bg-white text-blue-900 font-semibold hover:bg-blue-100 transition">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                Beranda
+            </a>
+            <a href="Absensi.html"
+                class="flex items-center justify-center gap-2 h-12 px-5 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition">
+                <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+                Input Absensi
+            </a>
+            <a href="Rekap.html"
+                class="flex items-center justify-center gap-2 h-12 px-5 rounded-lg bg-amber-400 text-slate-900 font-semibold hover:bg-amber-300 transition">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                Rekap Absensi
+            </a>
+        </div>
+    </div>
+</header>
+
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Status bar: update realtime -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
+      <div class="flex items-center gap-2 text-sm text-slate-600">
+        <span id="live-dot" class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+        <span>Pembaruan otomatis setiap 30 detik &middot; Terakhir diperbarui: <span id="last-updated" class="font-semibold text-slate-800">-</span></span>
+      </div>
+      <button id="btn-refresh" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm bg-indigo-900 text-white hover:bg-indigo-800 transition self-start sm:self-auto">
+        <i data-lucide="refresh-cw" id="refresh-icon" class="w-4 h-4"></i> Perbarui
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <div>
+        <label class="block mb-1 font-medium text-sm text-slate-700" for="filter-kelas">Kelas</label>
+        <select id="filter-kelas" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+          <option value="">Semua Kelas</option>
+        </select>
+      </div>
+      <div>
+        <label class="block mb-1 font-medium text-sm text-slate-700" for="filter-bulan">Bulan</label>
+        <select id="filter-bulan" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+          <option value="">Semua Bulan</option>
+          <option value="0">Januari</option>
+          <option value="1">Februari</option>
+          <option value="2">Maret</option>
+          <option value="3">April</option>
+          <option value="4">Mei</option>
+          <option value="5">Juni</option>
+          <option value="6">Juli</option>
+          <option value="7">Agustus</option>
+          <option value="8">September</option>
+          <option value="9">Oktober</option>
+          <option value="10">November</option>
+          <option value="11">Desember</option>
+        </select>
+      </div>
+      <div>
+        <label class="block mb-1 font-medium text-sm text-slate-700" for="filter-tahun">Tahun</label>
+        <select id="filter-tahun" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+          <option value="">Semua Tahun</option>
+        </select>
+      </div>
+      <div>
+        <label class="block mb-1 font-medium text-sm text-slate-700" for="filter-tanggal">Tanggal Spesifik</label>
+        <input type="date" id="filter-tanggal" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+      </div>
+      <div class="flex items-end">
+        <button id="btn-reset-filter" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border border-slate-300 text-slate-600 hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-4 h-4"></i> Reset Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading / error banner -->
+    <div id="status-banner" class="hidden mb-6 rounded-xl px-4 py-3 text-sm font-medium"></div>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+      <div class="rounded-xl p-4 shadow-sm border border-green-200 bg-green-50">
+        <div class="flex items-center justify-between mb-1">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-green-600"></i>
+          <span id="pct-hadir" class="text-xs font-semibold text-green-700">0%</span>
+        </div>
+        <p id="count-hadir" class="text-2xl font-extrabold text-green-700">0</p>
+        <p class="text-xs text-green-700/80 font-medium">Hadir</p>
+      </div>
+      <div class="rounded-xl p-4 shadow-sm border border-yellow-200 bg-yellow-50">
+        <div class="flex items-center justify-between mb-1">
+          <i data-lucide="thermometer" class="w-5 h-5 text-yellow-600"></i>
+          <span id="pct-sakit" class="text-xs font-semibold text-yellow-700">0%</span>
+        </div>
+        <p id="count-sakit" class="text-2xl font-extrabold text-yellow-700">0</p>
+        <p class="text-xs text-yellow-700/80 font-medium">Sakit</p>
+      </div>
+      <div class="rounded-xl p-4 shadow-sm border border-blue-200 bg-blue-50">
+        <div class="flex items-center justify-between mb-1">
+          <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
+          <span id="pct-izin" class="text-xs font-semibold text-blue-700">0%</span>
+        </div>
+        <p id="count-izin" class="text-2xl font-extrabold text-blue-700">0</p>
+        <p class="text-xs text-blue-700/80 font-medium">Izin</p>
+      </div>
+      <div class="rounded-xl p-4 shadow-sm border border-red-200 bg-red-50">
+        <div class="flex items-center justify-between mb-1">
+          <i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>
+          <span id="pct-alpha" class="text-xs font-semibold text-red-700">0%</span>
+        </div>
+        <p id="count-alpha" class="text-2xl font-extrabold text-red-700">0</p>
+        <p class="text-xs text-red-700/80 font-medium">Alpha</p>
+      </div>
+      <div class="rounded-xl p-4 shadow-sm border border-purple-200 bg-purple-50">
+        <div class="flex items-center justify-between mb-1">
+          <i data-lucide="badge-check" class="w-5 h-5 text-purple-600"></i>
+          <span id="pct-dispen" class="text-xs font-semibold text-purple-700">0%</span>
+        </div>
+        <p id="count-dispen" class="text-2xl font-extrabold text-purple-700">0</p>
+        <p class="text-xs text-purple-700/80 font-medium">Dispen</p>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+      <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-indigo-700"></i> Tren Kehadiran per Tanggal</h3>
+        <div class="relative" style="height:300px;"><canvas id="chart-trend"></canvas></div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4 text-indigo-700"></i> Distribusi Status</h3>
+        <div class="relative" style="height:300px;"><canvas id="chart-donut"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Data table -->
+    <!-- ==================== REKAP PER SISWA ==================== -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-10">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-slate-200">
+            <h3 class="flex items-center gap-2 font-bold text-slate-800">
+                <i data-lucide="table" class="w-5 h-5 text-indigo-700"></i>
+                Rekap per Siswa
+            </h3>
+            <input
+                id="table-search"
+                type="text"
+                placeholder="Cari nama siswa..."
+                class="w-full sm:w-60 h-11 rounded-xl border border-slate-300 px-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <p class="sm:hidden flex items-center gap-1 text-xs text-slate-400 px-5 pt-2">
+            <i data-lucide="move-horizontal" class="w-3.5 h-3.5"></i> Geser tabel ke kiri/kanan untuk melihat semua kolom
+        </p>
+        <!-- Wrapper -->
+        <div class="relative overflow-x-auto">
+            <table
+                class="min-w-[760px] w-full border-collapse">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="w-16 px-4 py-3 text-left text-xs font-bold uppercase">
+                            No
+                        </th>
+                        <th class="w-72 px-4 py-3 text-left text-xs font-bold uppercase">
+                            Nama Siswa
+                        </th>
+                        <th class="w-24 px-4 py-3 text-center text-xs font-bold text-green-700 uppercase">
+                            Hadir
+                        </th>
+                        <th class="w-24 px-4 py-3 text-center text-xs font-bold text-blue-700 uppercase">
+                            Izin
+                        </th>
+                        <th class="w-24 px-4 py-3 text-center text-xs font-bold text-yellow-700 uppercase">
+                            Sakit
+                        </th>
+                        <th class="w-24 px-4 py-3 text-center text-xs font-bold text-red-700 uppercase">
+                            Alpha
+                        </th>
+                        <th class="w-24 px-4 py-3 text-center text-xs font-bold text-purple-700 uppercase">
+                            Dispen
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+        <div
+            id="table-empty"
+            class="hidden py-10 text-center text-sm text-slate-400">
+            Belum ada data.
+        </div>
+        <!-- Pagination -->
+        <div id="table-pagination" class="hidden flex items-center justify-center gap-4 px-5 py-4 border-t border-slate-200">
+            <button id="btn-prev-page" class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <span id="page-info" class="text-sm font-medium text-slate-600 min-w-[140px] text-center">Halaman 1 dari 1</span>
+            <button id="btn-next-page" class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 border-t-4 border-amber-400 mt-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <img src="logo3.png" alt="Logo Kementerian Agama" class="w-10 h-10 object-contain">
+            <img src="logo_mts.png" alt="Logo MTs Negeri 2 Kota Tangerang" class="w-10 h-10 object-contain">
+          </div>
+          <p class="text-white font-bold text-sm">MTs NEGERI 2 KOTA TANGERANG</p>
+          <p class="text-blue-200 text-xs mt-1 leading-relaxed">Madrasah Tsanawiyah Negeri 2 Kota Tangerang, di bawah naungan Kementerian Agama Republik Indonesia.</p>
+        </div>
+
+        <div>
+          <p class="text-white font-semibold text-sm mb-3 tracking-wide">TAUTAN CEPAT</p>
+          <ul class="space-y-2 text-sm">
+            <li><a href="index.html" class="text-blue-200 hover:text-amber-300 transition inline-flex items-center gap-1.5"><i data-lucide="home" class="w-3.5 h-3.5"></i> Beranda</a></li>
+            <li><a href="Absensi.html" class="text-blue-200 hover:text-amber-300 transition inline-flex items-center gap-1.5"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> Input Absensi</a></li>
+            <li><a href="Rekap.html" class="text-blue-200 hover:text-amber-300 transition inline-flex items-center gap-1.5"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Rekap Absensi</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-white font-semibold text-sm mb-3 tracking-wide">MOTTO</p>
+          <p class="text-amber-300 text-sm font-semibold italic">"Ikhlas Beramal"</p>
+          <p class="text-blue-200/80 text-xs mt-2 leading-relaxed">Dibangun untuk membantu pencatatan kehadiran siswa menjadi lebih mudah, cepat, dan transparan.</p>
+        </div>
+
+      </div>
+      <div class="pt-6 border-t border-white/10 text-center">
+        <p class="text-blue-300 text-xs" id="footer-text">© 2026 MTs Negeri 2 Kota Tangerang. Seluruh hak cipta dilindungi.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function(){
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR7cqKemJdjfR97OukFuCTOoxl6z-NFkqlnmR2pRyq5BD1nZplhaggNlWLrYpZdpCiAWoXj_0NY1OIn/pub?output=csv';
+    const REFRESH_MS = 30000;
+    const STATUS_LIST = ['Hadir','Izin','Sakit','Alpha','Dispen'];
+    const STATUS_COLORS = { Hadir:'#16a34a', Izin:'#3b82f6', Sakit:'#eab308', Alpha:'#dc2626', Dispen:'#8b5cf6' };
+
+    let rawRows = [];      // parsed CSV rows (array of objects)
+    let metaCols = {};     // detected meta column names
+    let studentCols = [];  // detected student column names
+    let trendChart, donutChart;
+    let autoTimer = null;
+    const PAGE_SIZE = 10;   // jumlah baris per halaman pada tabel
+    let currentPage = 1;   // halaman aktif tabel
+
+    const el = id => document.getElementById(id);
+    const filterKelas = el('filter-kelas');
+    const filterBulan = el('filter-bulan');
+    const filterTahun = el('filter-tahun');
+    const filterTanggal = el('filter-tanggal');
+    const statusBanner = el('status-banner');
+
+    function showBanner(msg, type) {
+      statusBanner.textContent = msg;
+      statusBanner.className = 'mb-6 rounded-xl px-4 py-3 text-sm font-medium ' +
+        (type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
+         type === 'warn' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+         'bg-blue-50 text-blue-700 border border-blue-200');
+      statusBanner.classList.remove('hidden');
+    }
+    function hideBanner() { statusBanner.classList.add('hidden'); }
+
+    // Normalize a header string for detection purposes
+    function norm(s) { return (s || '').toString().trim().toLowerCase(); }
+
+    // Try to identify meta columns among the CSV headers, whatever their exact naming.
+    function detectColumns(fields) {
+      const meta = { pengisian: null, tanggal: null, kelas: null, guru: null };
+      fields.forEach(f => {
+        const n = norm(f);
+        if (!meta.pengisian && n.includes('pengisian')) meta.pengisian = f;
+        else if (!meta.tanggal && (n.includes('tanggal_absensi') || n === 'tanggal' || (n.includes('tanggal') && !n.includes('pengisian')))) meta.tanggal = f;
+        else if (!meta.kelas && n.includes('kelas')) meta.kelas = f;
+        else if (!meta.guru && (n.includes('guru') || n.includes('nama_guru'))) meta.guru = f;
+      });
+      const known = Object.values(meta).filter(Boolean);
+      const students = fields.filter(f => !known.includes(f) && f && f.trim() !== '');
+      return { meta, students };
+    }
+
+    // Parse a date string (various possible formats) into a Date object, or null.
+    function parseDate(str) {
+      if (!str) return null;
+      str = str.trim();
+      // ISO / yyyy-mm-dd
+      let m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+      // dd/mm/yyyy
+      m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    function fmtDate(d) {
+      if (!d) return '';
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    async function fetchData(isManual) {
+      const icon = el('refresh-icon');
+      icon.classList.add('spin');
+      try {
+        const res = await fetch(CSV_URL + (CSV_URL.includes('?') ? '&' : '?') + '_ts=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+        if (parsed.errors && parsed.errors.length && (!parsed.data || parsed.data.length === 0)) {
+          throw new Error('Gagal membaca format CSV');
+        }
+        const fields = parsed.meta.fields || [];
+        const detection = detectColumns(fields);
+        metaCols = detection.meta;
+        studentCols = detection.students;
+        rawRows = parsed.data.filter(r => Object.values(r).some(v => (v || '').toString().trim() !== ''));
+
+        if (rawRows.length === 0) {
+          showBanner('Spreadsheet berhasil terhubung, tetapi belum ada data absensi yang tercatat.', 'warn');
+        } else {
+          hideBanner();
+        }
+
+        populateFilterOptions();
+        renderAll();
+        el('last-updated').textContent = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' });
+      } catch (err) {
+        showBanner('Gagal mengambil data dari Spreadsheet: ' + err.message + '. Pastikan link publikasi CSV masih aktif (File > Share > Publish to web).', 'error');
+      } finally {
+        icon.classList.remove('spin');
+      }
+    }
+
+    function populateFilterOptions() {
+      // Kelas options
+      const currentKelas = filterKelas.value;
+      const kelasSet = new Set();
+      if (metaCols.kelas) rawRows.forEach(r => { const v = (r[metaCols.kelas] || '').trim(); if (v) kelasSet.add(v); });
+      const kelasList = Array.from(kelasSet).sort();
+      filterKelas.innerHTML = '<option value="">Semua Kelas</option>' + kelasList.map(k => `<option value="${k}">Kelas ${k}</option>`).join('');
+      if (kelasList.includes(currentKelas)) filterKelas.value = currentKelas;
+
+      // Tahun options
+      const currentTahun = filterTahun.value;
+      const yearSet = new Set();
+      rawRows.forEach(r => {
+        const d = parseDate(r[metaCols.tanggal]);
+        if (d) yearSet.add(d.getFullYear());
+      });
+      const nowYear = new Date().getFullYear();
+      for (let y = nowYear - 1; y <= nowYear + 3; y++) yearSet.add(y);
+      const yearList = Array.from(yearSet).sort();
+      filterTahun.innerHTML = '<option value="">Semua Tahun</option>' + yearList.map(y => `<option value="${y}">${y}</option>`).join('');
+      if (yearList.map(String).includes(currentTahun)) filterTahun.value = currentTahun;
+    }
+
+    function getFilteredRows() {
+      const kelas = filterKelas.value;
+      const bulan = filterBulan.value;
+      const tahun = filterTahun.value;
+      const tanggal = filterTanggal.value;
+
+      return rawRows.filter(r => {
+        if (kelas && metaCols.kelas && (r[metaCols.kelas] || '').trim() !== kelas) return false;
+        const d = metaCols.tanggal ? parseDate(r[metaCols.tanggal]) : null;
+        if (tanggal) {
+          if (!d || fmtDate(d) !== tanggal) return false;
+        } else {
+          if (bulan !== '' && (!d || d.getMonth() !== +bulan)) return false;
+          if (tahun !== '' && (!d || d.getFullYear() !== +tahun)) return false;
+        }
+        return true;
+      });
+    }
+
+    function computeAggregates(rows) {
+      // Overall status totals
+      const totals = { Hadir:0, Izin:0, Sakit:0, Alpha:0, Dispen:0 };
+      // Per-student totals
+      const perStudent = {}; // name -> {Hadir,...}
+      // Per-date totals for trend
+      const perDate = {}; // 'yyyy-mm-dd' -> {Hadir,...}
+
+      rows.forEach(r => {
+        const d = metaCols.tanggal ? parseDate(r[metaCols.tanggal]) : null;
+        const dateKey = d ? fmtDate(d) : 'Tanpa Tanggal';
+        if (!perDate[dateKey]) perDate[dateKey] = { Hadir:0, Izin:0, Sakit:0, Alpha:0, Dispen:0 };
+
+        studentCols.forEach(sc => {
+          const raw = (r[sc] || '').toString().trim();
+          if (!raw) return;
+          // Normalize status text (case-insensitive match to known statuses)
+          const status = STATUS_LIST.find(s => s.toLowerCase() === raw.toLowerCase());
+          if (!status) return;
+
+          totals[status]++;
+          perDate[dateKey][status]++;
+
+          if (!perStudent[sc]) perStudent[sc] = { Hadir:0, Izin:0, Sakit:0, Alpha:0, Dispen:0 };
+          perStudent[sc][status]++;
+        });
+      });
+
+      return { totals, perStudent, perDate };
+    }
+
+    function renderStatCards(totals) {
+      const grand = STATUS_LIST.reduce((a,s) => a + totals[s], 0);
+      STATUS_LIST.forEach(s => {
+        el('count-' + s.toLowerCase()).textContent = totals[s];
+        const pct = grand > 0 ? ((totals[s] / grand) * 100).toFixed(1) : '0.0';
+        el('pct-' + s.toLowerCase()).textContent = pct + '%';
+      });
+    }
+
+    function renderTrendChart(perDate) {
+      const dates = Object.keys(perDate).filter(k => k !== 'Tanpa Tanggal').sort();
+      const ctx = document.getElementById('chart-trend').getContext('2d');
+      const datasets = STATUS_LIST.map(s => ({
+        label: s,
+        data: dates.map(d => perDate[d][s]),
+        borderColor: STATUS_COLORS[s],
+        backgroundColor: STATUS_COLORS[s] + '22',
+        tension: 0.3,
+        fill: false,
+        pointRadius: 3,
+      }));
+      if (trendChart) trendChart.destroy();
+      trendChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: dates, datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    function renderDonutChart(totals) {
+      const ctx = document.getElementById('chart-donut').getContext('2d');
+      if (donutChart) donutChart.destroy();
+      donutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: STATUS_LIST,
+          datasets: [{
+            data: STATUS_LIST.map(s => totals[s]),
+            backgroundColor: STATUS_LIST.map(s => STATUS_COLORS[s]),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }
+        }
+      });
+    }
+
+    function renderTable(perStudent) {
+      const tbody = el('table-body');
+      const search = norm(el('table-search').value);
+      const names = Object.keys(perStudent).filter(n => norm(n).includes(search)).sort();
+
+      const totalItems = names.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const pageNames = names.slice(startIdx, startIdx + PAGE_SIZE);
+
+      tbody.innerHTML = '';
+      pageNames.forEach((name, idx) => {
+        const c = perStudent[name];
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-100 hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="px-4 py-3">${startIdx + idx + 1}</td>
+          <td class="px-4 py-3 whitespace-nowrap font-medium">${name}</td>
+          <td class="px-4 py-3 text-center">${c.Hadir}</td>
+          <td class="px-4 py-3 text-center">${c.Izin}</td>
+          <td class="px-4 py-3 text-center">${c.Sakit}</td>
+          <td class="px-4 py-3 text-center">${c.Alpha}</td>
+          <td class="px-4 py-3 text-center">${c.Dispen}</td>
+          `;
+        tbody.appendChild(tr);
+      });
+
+      el('table-empty').classList.toggle('hidden', totalItems > 0);
+      el('table-pagination').classList.toggle('hidden', totalItems === 0);
+      el('page-info').textContent = `Halaman ${currentPage} dari ${totalPages}`;
+      el('btn-prev-page').disabled = currentPage <= 1;
+      el('btn-next-page').disabled = currentPage >= totalPages;
+    }
+
+    function renderAll() {
+      const rows = getFilteredRows();
+      const { totals, perStudent, perDate } = computeAggregates(rows);
+      renderStatCards(totals);
+      renderTrendChart(perDate);
+      renderDonutChart(totals);
+      renderTable(perStudent);
+    }
+
+    // Events
+    el('btn-refresh').addEventListener('click', () => fetchData(true));
+    filterKelas.addEventListener('change', () => { currentPage = 1; renderAll(); });
+    filterBulan.addEventListener('change', () => { currentPage = 1; renderAll(); });
+    filterTahun.addEventListener('change', () => { currentPage = 1; renderAll(); });
+    filterTanggal.addEventListener('change', () => { currentPage = 1; renderAll(); });
+    el('table-search').addEventListener('input', () => {
+      currentPage = 1;
+      const rows = getFilteredRows();
+      const { perStudent } = computeAggregates(rows);
+      renderTable(perStudent);
+    });
+    el('btn-reset-filter').addEventListener('click', () => {
+      filterKelas.value = ''; filterBulan.value = ''; filterTahun.value = ''; filterTanggal.value = '';
+      el('table-search').value = '';
+      currentPage = 1;
+      renderAll();
+    });
+    el('btn-prev-page').addEventListener('click', () => {
+      if (currentPage <= 1) return;
+      currentPage--;
+      const rows = getFilteredRows();
+      const { perStudent } = computeAggregates(rows);
+      renderTable(perStudent);
+    });
+    el('btn-next-page').addEventListener('click', () => {
+      currentPage++;
+      const rows = getFilteredRows();
+      const { perStudent } = computeAggregates(rows);
+      renderTable(perStudent);
+    });
+
+    // Init
+    fetchData(false);
+    autoTimer = setInterval(() => fetchData(false), REFRESH_MS);
+    lucide.createIcons();
+  })();
+  </script>
+</body>
+</html>
